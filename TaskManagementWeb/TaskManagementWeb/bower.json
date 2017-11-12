@@ -1,0 +1,12 @@
+{
+  "name": "asp.net",
+  "private": true,
+  "dependencies": {
+    "jQuery": "3.2.1",
+    "bootstrap": "v3.3.7",
+    "jquery-ajax-unobtrusive": "v3.2.4",
+    "gijgo": "v1.6.1",
+    "respond": "1.4.2",
+    "jquery-validation": "jquery-validate#1.17.0"
+  }
+}

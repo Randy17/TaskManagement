@@ -1,0 +1,134 @@
+﻿
+@{ 
+    ViewBag.Title = "Управление задачами";
+}
+
+
+@section scripts
+{    
+    <script type="text/javascript" src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script>
+    @*<script type="text/javascript" src="~/lib/gijgo/dist/modular/js/tree.min.js"></script>*@
+    <script type="text/javascript" src="~/lib/gijgo/dist/combined/js/gijgo.min.js"></script>
+    <link href="~/lib/gijgo/dist/combined/css/gijgo.min.css" rel="stylesheet" />
+    <link href="~/lib/gijgo/dist/modular/css/tree.css" rel="stylesheet" />
+
+    <script type="text/javascript">
+        var tree;
+
+        $(document).ready(function () {
+
+            tree = $('#treeTasks').tree({
+                uiLibrary: 'bootstrap',
+                dataSource: '@Url.Action("GetTreeData", "Home")',
+                primaryKey: 'id',
+                select: OnSelectedTaskChanged
+            });
+
+            $('#btnRemoveTask').on('click', function () {
+                var selections = tree.getSelections();
+
+
+                if (selections.length > 0) {
+                    var selectedItemID = selections[0];
+
+                    $('#txtConfitmDeleteMsg').val("Удалить задачу?");
+                    $('#divRemoveDialog').modal('show');
+
+
+
+
+
+                    var formData = new FormData();
+                    formData.append("id", selectedItemID);
+                    $.ajax({
+                        type: 'POST',
+                        url: '@Url.Action("RemoveTask", "Home")',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        success: function (data) {
+                            if (data.success == true) {
+                                tree.reload();
+                            }
+                        }
+                    })
+                }               
+            });
+        });
+
+        $('#btnAddTask').click(function () {
+            var url = $(this).data("url");
+
+            $.get(url, function (data) {
+                $('#addTaskDialogBody').html(data);
+                $('#divDialog').modal('show');
+            })
+
+        });
+
+        function OnTaskAddSuccess(data) {
+            if (data.success != true) {
+                alert("Не удалось добавить задачу.")
+                return;
+            }
+
+            $('#divDialog').modal('hide');
+            $('#addTaskDialogBody').html("");
+            tree.reload();
+        };
+
+        function OnSelectedTaskChanged (e, node, id) {
+            selectedTaskID = id;
+        };
+
+    </script>
+}
+
+<div class="row">
+    <h2 class="text-center">Управление задачами</h2>
+</div>
+<div class="row">
+    <div class="col-md-2 menu-board ">
+        <div class="text-center ">
+            <button id="btnAddTask" type="button" class="btn btn-success" data-toggle="modal" data-url="@Url.Action("AddTask", "Home")" >Новая задача</button>
+            <button id="btnRemoveTask" type="button" class="btn btn-danger" data-toggle="modal" >Удалить задачу</button>
+        </div>
+        <div id="treeTasks"></div>
+    </div>
+    <div class="col-md-10">
+        
+    </div>
+</div>
+
+<div id="divDialog" class="modal fade" role="dialog" aria-labelledby="AddTaskDlg" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Новая задача</h4>
+            </div>
+            <div class="modal-body panel-body" id="addTaskDialogBody" width="100%">
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<div id="divRemoveDialog" class="modal fade" role="dialog" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Удалить задачу?</h4>
+            </div>
+            <div class="modal-body panel-body" width="100%">
+                <label id="txtConfitmDeleteMsg"></label>
+                <div class="text-center">
+                    <input class="btn btn-primary" type="button" value="Да" id="btnConfirmRemoveTask" />
+                    <input class="btn btn-default" id="btnCancelAddVplDlg" type="button" value="Нет" data-dismiss="modal" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>*@
+
