@@ -50,11 +50,8 @@ namespace TaskManagementWeb.Controllers
 
         public ActionResult TaskDetails(int taskID)
         {
-            var tt = _repository.GetTask(taskID);
-            tt.Name = "1";
 
-            Models.Task task = _context.Tasks.FirstOrDefault(t => t.ID == taskID);
-            _context.Tasks.Load();
+            Models.Task task = _repository.GetTask(taskID);
             if(task != null)
             {
                 return PartialView("TaskDetailsPartial", task);
