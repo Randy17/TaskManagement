@@ -9,34 +9,35 @@
 </script>
 
 <form asp-controller="Home" asp-action="AddTask" data-ajax="true" data-ajax-method="POST" data-ajax-success="OnTaskAddSuccess">
-<div class="form-group" >
-    <label>Наименование:</label>
-    @Html.TextBoxFor(m => m.Name, new { @id="tbName", @class = "form-control", @width = "100%", @required = "true" })
-    @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
-</div>
+    @Html.HiddenFor(m => m.ParentId)
+    <div class="form-group" >
+        <label>Наименование:</label>
+        @Html.TextBoxFor(m => m.Name, new { @id="tbName", @class = "form-control", @width = "100%", @required = "true" })
+        @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
+    </div>
 
-<div class="form-group">
-    <label>Описание:</label>
-    @Html.TextBoxFor(m => m.Description, new { @id = "tbDescription", @class = "form-control", })
-    @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
-</div>
+    <div class="form-group">
+        <label>Описание:</label>
+        @Html.TextAreaFor(m => m.Description, new { @id = "tbDescription", @class = "form-control", })
+        @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+    </div>
 
-<div class="form-group">
-    <label>Исполнитель:</label>
-    @Html.TextBoxFor(m => m.Implementer, new { @id = "tbImplementer", @class = "form-control", @required = "true" })
-    @Html.ValidationMessageFor(m => m.Implementer, "", new { @class = "text-danger" })
-</div>
+    <div class="form-group">
+        <label>Исполнитель:</label>
+        @Html.TextBoxFor(m => m.Implementer, new { @id = "tbImplementer", @class = "form-control", @required = "true" })
+        @Html.ValidationMessageFor(m => m.Implementer, "", new { @class = "text-danger" })
+    </div>
 
-<div class="form-group">
-    <label>Трудоемкость:</label>
-    @Html.TextBoxFor(m => m.PlannedExecutionTimeHours, new { @id = "tbPlannedExecutionTimeHours", @class = "form-control", @required = "true" })
-    @Html.ValidationMessageFor(m => m.PlannedExecutionTimeHours, "", new { @class = "text-danger" })
-</div>
+    <div class="form-group">
+        <label>Трудоемкость:</label>
+        @Html.TextBoxFor(m => m.PlannedExecutionTimeHours, new { @id = "tbPlannedExecutionTimeHours", @class = "form-control", @required = "true" })
+        @Html.ValidationMessageFor(m => m.PlannedExecutionTimeHours, "", new { @class = "text-danger" })
+    </div>
 
-<br />
+    <br />
 
-<div class="text-center">
-    <input class="btn btn-primary" type="submit" value="Добавить" id="btnConfirmAddTask" />
-    <input class="btn btn-default" id="btnCancelAddVplDlg" type="button" value="Отмена" data-dismiss="modal" />
-</div>
+    <div class="text-center">
+        <input class="btn btn-primary" type="submit" value="Добавить" id="btnConfirmAddTask" />
+        <input class="btn btn-default" id="btnCancelAddVplDlg" type="button" value="Отмена" data-dismiss="modal" />
+    </div>
 </form>

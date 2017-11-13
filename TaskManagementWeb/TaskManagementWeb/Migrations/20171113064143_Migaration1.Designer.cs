@@ -11,9 +11,10 @@ using TaskManagementWeb.Models;
 namespace TaskManagementWeb.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20171113064143_Migaration1")]
+    partial class Migaration1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,7 +54,7 @@ namespace TaskManagementWeb.Migrations
             modelBuilder.Entity("TaskManagementWeb.Models.Task", b =>
                 {
                     b.HasOne("TaskManagementWeb.Models.Task", "Parent")
-                        .WithMany("Subtasks")
+                        .WithMany()
                         .HasForeignKey("ParentId");
                 });
 #pragma warning restore 612, 618

@@ -8,9 +8,7 @@ namespace TaskManagementWeb.Models.ViewModels
     public class TaskTreeItemViewModel
     {
         public int id { get; set; }
-
         public string text { get; set; }
-
         public virtual List<TaskTreeItemViewModel> children { get; set; }
     }
 }

@@ -11,35 +11,35 @@
     <script type="text/javascript" src="~/lib/gijgo/dist/combined/js/gijgo.min.js"></script>
     <link href="~/lib/gijgo/dist/combined/css/gijgo.min.css" rel="stylesheet" />
     <link href="~/lib/gijgo/dist/modular/css/tree.css" rel="stylesheet" />
+    <script type="text/javascript" src="~/lib/bootstrap-treeview-1.2.0/dist/bootstrap-treeview.min.js"></script>
 
     <script type="text/javascript">
-        var tree;
+        var tree = null;
+        var selectedTaskID;
 
         $(document).ready(function () {
 
-            tree = $('#treeTasks').tree({
-                uiLibrary: 'bootstrap',
-                dataSource: '@Url.Action("GetTreeData", "Home")',
-                primaryKey: 'id',
-                select: OnSelectedTaskChanged
+            $.ajax({
+                url: '@Url.Action("GetTreeData", "Home")',
+                method: "GET",
+                dataType: "json",
+                success: function (data) {
+                    tree = $('#treeTasks').treeview({
+                        levels: 1,
+                        data: data,
+                        onNodeSelected: OnSelectedTaskChanged
+                    });
+                }
             });
 
             $('#btnRemoveTask').on('click', function () {
-                var selections = tree.getSelections();
-
+                var selections = $('#treeTasks').treeview(true).getSelected();
 
                 if (selections.length > 0) {
-                    var selectedItemID = selections[0];
-
-                    $('#txtConfitmDeleteMsg').val("Удалить задачу?");
-                    $('#divRemoveDialog').modal('show');
-
-
-
-
-
+                    var selectedItemID = selections[0].id;
                     var formData = new FormData();
                     formData.append("id", selectedItemID);
+
                     $.ajax({
                         type: 'POST',
                         url: '@Url.Action("RemoveTask", "Home")',
@@ -48,22 +48,21 @@
                         processData: false,
                         success: function (data) {
                             if (data.success == true) {
-                                tree.reload();
+                                ReloadTasksTree();
                             }
                         }
                     })
-                }               
+                }
             });
         });
 
-        $('#btnAddTask').click(function () {
+        $('#btnAddTask').on('click', function () {
             var url = $(this).data("url");
 
             $.get(url, function (data) {
                 $('#addTaskDialogBody').html(data);
                 $('#divDialog').modal('show');
             })
-
         });
 
         function OnTaskAddSuccess(data) {
@@ -74,29 +73,85 @@
 
             $('#divDialog').modal('hide');
             $('#addTaskDialogBody').html("");
-            tree.reload();
+            ReloadTasksTree();
         };
 
-        function OnSelectedTaskChanged (e, node, id) {
-            selectedTaskID = id;
+        function OnTaskUpdateSuccess(data) {
+            if (data.success != true) {
+                alert("Не удалось добавить задачу.")
+                return;
+            }
+
+            UpdateTaskDetaild(selectedTaskID);
+            ReloadTasksTree();
         };
+
+        function OnSelectedTaskChanged(e, node) {
+            var t = tree.dataSource;
+            selectedTaskID = node.id;
+
+            if (node.nodes != null && node.nodes.length > 0) {
+                $('#btnRemoveTask').attr('disabled', true);
+
+            }
+            else
+            {
+                $('#btnRemoveTask').attr('disabled', false);
+            }
+
+            UpdateTaskDetaild(selectedTaskID);
+        };
+
+        function UpdateTaskDetaild(taskId) {
+            var data = { taskID: taskId };
+            $('#divTaskDetails').load('@Url.Action("TaskDetails", "Home")', data);
+        };
+
+        function ReloadTasksTree() {
+            if (tree == null)
+                return;
+            var expandedNodes = $('#treeTasks').treeview(true).getExpanded();
+
+            $.ajax({
+                url: '@Url.Action("GetTreeData", "Home")',
+                method: "GET",
+                dataType: "json",
+                success: function (data) {
+                    tree = $('#treeTasks').treeview({
+                        level: 1,
+                        data: data,
+                        onNodeSelected: OnSelectedTaskChanged
+                    });
+
+                    var allNodes = $('#treeTasks').treeview(true).getCollapsed();
+
+                    for (var i = 0; i < expandedNodes.length; i++) {
+
+                        var findIdem = allNodes.find(function (it) {
+                            return it.id == expandedNodes[i].id;
+                        });
+                        if (findIdem != null) {
+                            $('#treeTasks').treeview(true).expandNode(findIdem);
+                        }
+                    }
+                }
+            });
+        }
 
     </script>
 }
 
-<div class="row">
-    <h2 class="text-center">Управление задачами</h2>
-</div>
+
 <div class="row">
     <div class="col-md-2 menu-board ">
         <div class="text-center ">
             <button id="btnAddTask" type="button" class="btn btn-success" data-toggle="modal" data-url="@Url.Action("AddTask", "Home")" >Новая задача</button>
-            <button id="btnRemoveTask" type="button" class="btn btn-danger" data-toggle="modal" >Удалить задачу</button>
+            <button id="btnRemoveTask" type="button" class="btn btn-danger" disabled="True" data-toggle="modal" >Удалить задачу</button>
         </div>
         <div id="treeTasks"></div>
     </div>
     <div class="col-md-10">
-        
+        <div id="divTaskDetails"></div>
     </div>
 </div>
 
