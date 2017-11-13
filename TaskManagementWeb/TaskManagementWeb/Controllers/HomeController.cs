@@ -11,15 +11,11 @@ namespace TaskManagementWeb.Controllers
 {
     public class HomeController : Controller
     {
-        private ApplicationDbContext _context;
         private TasksRepository _repository;
 
-        public HomeController(ApplicationDbContext context, TasksRepository repository)
+        public HomeController(TasksRepository repository)
         {
-            _context = context;
-            _repository = repository;
-
-            
+            _repository = repository;            
         }
 
         public ViewResult Index()
@@ -29,22 +25,7 @@ namespace TaskManagementWeb.Controllers
 
         public JsonResult GetTreeData()
         {
-            var tasksRecords = _context.Tasks
-                .Select(task => new TaskTreeDbItem
-                {
-                    ID = task.ID,
-                    Name = task.Name,
-                    ParentID = task.Parent == null ? null : (int?)task.Parent.ID
-                }).ToList();
-
-            List<TaskTreeItemViewModelTest> taskTreeItems = tasksRecords.Where(t => t.ParentID == null)
-                .Select(t => new TaskTreeItemViewModelTest
-                {
-                    id = t.ID,
-                    text = t.Name,
-                    nodes = GetSubtasks(t.ID, tasksRecords)
-                }).ToList();
-
+            List<TaskTreeItemViewModelTest> taskTreeItems = _repository.GetTaskTreeItems();
             return Json(taskTreeItems);
         }
 
@@ -79,29 +60,21 @@ namespace TaskManagementWeb.Controllers
             model.CreationTimeStamp = DateTime.Now;
             model.Status = (int)Models.TaskStatus.Assigned;
 
-            _context.Tasks.Add(model);
-            UpdateParents(model.ParentId, model.PlannedExecutionTimeHours, model.ActualExecutionTimeHours);
-            await _context.SaveChangesAsync();
-
-
+            await _repository.AddTaskAsync(model);
             return new JsonResult(new { Success = true });
         }
 
         [HttpPost]
         public async Task<ActionResult> RemoveTask(int id)
         {
-            Models.Task dbTask = _context.Tasks.FirstOrDefault(p => p.ID == id);
-            if (dbTask != null)
+            int result = await _repository.RemoveTaskAsync(id);
+
+            if (result != 0)
             {
-                _context.Tasks.Remove(dbTask);
-                UpdateParents(dbTask.ParentId, -dbTask.PlannedExecutionTimeHours, -dbTask.ActualExecutionTimeHours);
-                await _context.SaveChangesAsync();
                 return new JsonResult(new { Success = true });
             }
-            else
-            {
-                return new JsonResult(new { Success = false });
-            }            
+
+            return new JsonResult(new { Success = false });           
         }
 
         [HttpPost]
@@ -116,65 +89,13 @@ namespace TaskManagementWeb.Controllers
                 model.CompleteTimeStamp = null;
             }
 
-
-            Models.Task dbTask = _context.Tasks.FirstOrDefault(t => t.ID == model.ID);
-            if(dbTask != null)
+            Models.Task updatedTask = await _repository.UpdateTaskAsync(model);
+            if(updatedTask != null)
             {
-                int? actualExecutionTimeDiff = 0;
-                int plannedExecutionTimeDiff = 0;
-
-                dbTask.Name = model.Name;
-                dbTask.Description = model.Description;
-
-                if(dbTask.ActualExecutionTimeHours != null && model.ActualExecutionTimeHours != null)
-                {
-                    actualExecutionTimeDiff = model.ActualExecutionTimeHours - dbTask.ActualExecutionTimeHours;
-                }
-                dbTask.ActualExecutionTimeHours = model.ActualExecutionTimeHours;
-
-                plannedExecutionTimeDiff = model.PlannedExecutionTimeHours - dbTask.PlannedExecutionTimeHours;
-                dbTask.PlannedExecutionTimeHours = model.PlannedExecutionTimeHours;
-
-                dbTask.CompleteTimeStamp = model.CompleteTimeStamp;
-                dbTask.Implementer = model.Implementer;
-                dbTask.Status = model.Status;
-
-                UpdateParents(dbTask.ParentId, plannedExecutionTimeDiff, actualExecutionTimeDiff);
-                await _context.SaveChangesAsync();
-                return new JsonResult(new { Success = true });
+                return new JsonResult(new { Success = true, updatedTask = updatedTask });
             }
 
-            return new JsonResult(new { Success = false });
-        }
-
-        private List<TaskTreeItemViewModelTest> GetSubtasks(int parentID, IEnumerable<TaskTreeDbItem> tasksRecords)
-        {
-            List<TaskTreeItemViewModelTest> subtasks = tasksRecords.Where(t => t.ParentID == parentID)
-                .Select(t => new TaskTreeItemViewModelTest
-                {
-                    id = t.ID,
-                    text = t.Name,
-                    nodes = GetSubtasks(t.ID, tasksRecords)
-                }).ToList();
-
-            if (subtasks.Count == 0)
-                subtasks = null;
-
-            return subtasks;
-        }
-
-        private void UpdateParents(int? parentID, int plannedExecutionTimeDiff, int? actualExecutionTimeDiff)
-        {
-            //if (parentID == null)
-            //    return;
-            //Models.Task dbTask = _context.Tasks.FirstOrDefault(t => t.ID == parentID);
-            //if(dbTask != null)
-            //{
-            //    dbTask.PlannedExecutionTimeHours += plannedExecutionTimeDiff;
-            //    if(actualExecutionTimeDiff != null)
-            //        dbTask.ActualExecutionTimeHours += actualExecutionTimeDiff;
-            //    UpdateParents(dbTask.ParentId, plannedExecutionTimeDiff, actualExecutionTimeDiff);
-            //}
+            return new JsonResult(new { Success = false });            
         }
     }
 }

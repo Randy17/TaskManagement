@@ -3,11 +3,14 @@
   "private": true,
   "dependencies": {
     "jQuery": "3.2.1",
-    "bootstrap": "v3.3.7",
+    "bootstrap": "v4.0.0-beta",
     "jquery-ajax-unobtrusive": "v3.2.4",
     "gijgo": "v1.6.1",
     "respond": "1.4.2",
     "jquery-validation": "jquery-validate#1.17.0",
     "bootstrap-treeview": "1.2.0"
+  },
+  "resolutions": {
+    "bootstrap": "v4.0.0-beta"
   }
 }

@@ -12,11 +12,12 @@
 			errors.push( errorMessage );
 		};
 	</script>
-	<script src="../../../dist/jquery.min.js"></script>
+	<script src="../../jquery.js"></script>
+	<script src="../iframeTest.js"></script>
 </head>
 <body>
 	<script>
-		window.parent.iframeCallback( cc_on, errors, jQuery );
+		startIframeTest( cc_on, errors );
 	</script>
 </body>
 </html>

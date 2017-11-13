@@ -1,11 +1,11 @@
 ﻿
-@{ 
+@{
     ViewBag.Title = "Управление задачами";
 }
 
 
 @section scripts
-{    
+{
     <script type="text/javascript" src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script>
     @*<script type="text/javascript" src="~/lib/gijgo/dist/modular/js/tree.min.js"></script>*@
     <script type="text/javascript" src="~/lib/gijgo/dist/combined/js/gijgo.min.js"></script>
@@ -27,8 +27,9 @@
                     tree = $('#treeTasks').treeview({
                         levels: 1,
                         data: data,
-                        onNodeSelected: OnSelectedTaskChanged
+                        onNodeSelected: OnSelectedTaskChanged,
                     });
+                    $('#btnAddTask').attr('disabled', false);
                 }
             });
 
@@ -92,7 +93,6 @@
 
             if (node.nodes != null && node.nodes.length > 0) {
                 $('#btnRemoveTask').attr('disabled', true);
-
             }
             else
             {
@@ -110,6 +110,7 @@
         function ReloadTasksTree() {
             if (tree == null)
                 return;
+            $('#btnAddTask').attr('disabled', true);
             var expandedNodes = $('#treeTasks').treeview(true).getExpanded();
 
             $.ajax({
@@ -134,6 +135,8 @@
                             $('#treeTasks').treeview(true).expandNode(findIdem);
                         }
                     }
+
+                    $('#btnAddTask').attr('disabled', false);
                 }
             });
         }
@@ -144,12 +147,16 @@
 
 <div class="row">
     <div class="col-md-2 menu-board ">
-        <div class="text-center ">
-            <button id="btnAddTask" type="button" class="btn btn-success" data-toggle="modal" data-url="@Url.Action("AddTask", "Home")" >Новая задача</button>
-            <button id="btnRemoveTask" type="button" class="btn btn-danger" disabled="True" data-toggle="modal" >Удалить задачу</button>
-        </div>
-        <div id="treeTasks"></div>
-    </div>
+        <div class="text-center">
+            <button id="btnAddTask" type="button" class="btn btn-success btn-block" data-toggle="modal" disabled="True" data-url="@Url.Action("AddTask", "Home")">
+                <span class="glyphicon glyphicon-plus-sign"></span> Новая задача
+            </button>
+            <button id="btnRemoveTask" type="button" class="btn btn-danger btn-block" disabled="True" data-toggle="modal">
+                <span class="glyphicon glyphicon-trash"></span> Удалить задачу
+            </button>
+        </div>        
+        <div class="mt-lg-5" id="treeTasks"></div>
+    </div>    
     <div class="col-md-10">
         <div id="divTaskDetails"></div>
     </div>
@@ -170,20 +177,20 @@
 </div>
 
 @*<div id="divRemoveDialog" class="modal fade" role="dialog" aria-hidden="true" data-backdrop="static">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Удалить задачу?</h4>
-            </div>
-            <div class="modal-body panel-body" width="100%">
-                <label id="txtConfitmDeleteMsg"></label>
-                <div class="text-center">
-                    <input class="btn btn-primary" type="button" value="Да" id="btnConfirmRemoveTask" />
-                    <input class="btn btn-default" id="btnCancelAddVplDlg" type="button" value="Нет" data-dismiss="modal" />
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Удалить задачу?</h4>
+                </div>
+                <div class="modal-body panel-body" width="100%">
+                    <label id="txtConfitmDeleteMsg"></label>
+                    <div class="text-center">
+                        <input class="btn btn-primary" type="button" value="Да" id="btnConfirmRemoveTask" />
+                        <input class="btn btn-default" id="btnCancelAddVplDlg" type="button" value="Нет" data-dismiss="modal" />
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>*@
+    </div>*@
 

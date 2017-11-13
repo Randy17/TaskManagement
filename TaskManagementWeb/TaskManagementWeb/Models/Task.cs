@@ -43,5 +43,17 @@ namespace TaskManagementWeb.Models
                 return Subtasks.Sum(st => st.CalculatedPlannedExecutionTimeHours) + PlannedExecutionTimeHours;
             }
         }
+        [NotMapped]
+        public int CalculatedActualExecutionTimeHours
+        {
+            get
+            {
+                if (Subtasks == null)
+                {
+                    return ActualExecutionTimeHours ?? 0;
+                }
+                return Subtasks.Sum(st => st.CalculatedActualExecutionTimeHours) + ActualExecutionTimeHours ?? 0;
+            }
+        }
     }
 }

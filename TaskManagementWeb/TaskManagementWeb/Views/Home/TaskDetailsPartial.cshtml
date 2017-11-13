@@ -11,79 +11,105 @@
     });
 </script>
 
-<div>
-    <div class="container-fluid bg-primary" >
-        <div >
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <div>
             <div class='btn-toolbar pull-right'>
                 <div class='btn-group'>
-                    <button id="btnAddSubTask" class="btn btn-success pull-right" data-url="@Url.Action("AddTask", "Home", new { parentID = Model.ID })">Добавить подзадачу</button>
+                    <button id="btnAddSubTask" class="btn btn-success pull-right" data-url="@Url.Action("AddTask", "Home", new { parentID = Model.ID })">
+                        <span class="glyphicon glyphicon-plus-sign"></span> Добавить подзадачу
+                    </button>
                 </div>
             </div>
             <h3 class="text-center">@Model.Name</h3>
         </div>
-        
     </div>
-    <form asp-action="UpdateTask" asp-controller="Home" data-ajax="true" data-ajax-method="POST" data-ajax-success="OnTaskUpdateSuccess">
-        @Html.HiddenFor(m => m.ID)
-        <div class="form-group">
-            <label>Наименование:</label>
-            @Html.TextBoxFor(m => m.Name, new { @id = "tbName", @class = "form-control", @width = "100%", @required = "true" })
-            @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
-        </div>
-
-        <div class="form-group">
-            <label>Описание:</label>
-            @Html.TextAreaFor(m => m.Description, new { @id = "tbDescription", @class = "form-control", })
-            @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
-        </div>
-
-        <div class="form-group">
-            <label>Исполнитель:</label>
-            @Html.TextBoxFor(m => m.Implementer, new { @id = "tbImplementer", @class = "form-control", @required = "true" })
-            @Html.ValidationMessageFor(m => m.Implementer, "", new { @class = "text-danger" })
-        </div>
-
-        <div class="form-group">
-            <label>Дата регистрации:</label>
-            <div class="panel">
-                @Html.DisplayFor(m => m.CreationTimeStamp)
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Статус:</label>
-            @Html.DropDownListFor(m => m.Status, new List<SelectListItem>()
-                                        {
-                                            new SelectListItem() { Text = "Назначена", Value = "1" },
-                                            new SelectListItem() { Text = "Выполняется", Value = "2"},
-                                            new SelectListItem() { Text = "Приостановлена", Value = "3"},
-                                            new SelectListItem() { Text = "Завершена", Value = "4"},
-                                        },
-                                            new { @id="selectStatus", @class = "form-control" })
-        </div>
-
-        <div class="form-group">
-            <label>Плановая трудоемкость задачи (часов):</label>
-
-            <div class="panel panel-default">
-                <div class="form-inline">
-                    <label>Плановая трудоемкость текущей задачи (часов):</label>
-                    @Html.TextBoxFor(m => m.PlannedExecutionTimeHours, new { @id = "tbPlannedExecutionTime", @class = "form-control", @required = "true" })
-                    @Html.ValidationMessageFor(m => m.PlannedExecutionTimeHours, "", new { @class = "text-danger" })
+    <div class="panel-body">
+        <form class="form-horizontal" asp-action="UpdateTask" asp-controller="Home" data-ajax="true" data-ajax-method="POST" data-ajax-success="OnTaskUpdateSuccess">
+            @Html.HiddenFor(m => m.ID)
+            <div class="form-group">
+                <label class="col-sm-2">Наименование:</label>
+                <div class="col-sm-10">
+                    @Html.TextBoxFor(m => m.Name, new { @id = "tbName", @class = "form-control", @width = "100%", @required = "true" })
+                    @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
                 </div>
+            </div>
 
-                @if (Model.HasSubtasks)
-                {
-                    <div class="panel panel-default ">
-                        <div class="panel-heading">
-                            <h4 class="panel-title">
-                                <a data-toggle="collapse" href="#collapsePlanned">Плановая трудоемкость подзадач:</a>
-                            </h4>
-                        </div>
-                        <div id="collapsePlanned" class="panel-collapse collapse">
-                            <div class="panel-body">
+            <div class="form-group">
+                <label class="col-sm-2">Описание:</label>
+                <div class="col-sm-10">
+                    @Html.TextAreaFor(m => m.Description, new { @id = "tbDescription", @class = "form-control", })
+                    @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2">Исполнитель:</label>
+                <div class="col-sm-10">
+                    @Html.TextBoxFor(m => m.Implementer, new { @id = "tbImplementer", @class = "form-control", @required = "true" })
+                    @Html.ValidationMessageFor(m => m.Implementer, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2">Дата регистрации:</label>
+                <div class="col-sm-10">
+                    @Html.DisplayFor(m => m.CreationTimeStamp)
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2">Статус:</label>
+                <div class="col-sm-10">
+                    @{
+                        List<SelectListItem> statusItems = new List<SelectListItem>();
+
+                        switch (Model.Status)
+                        {
+                            case (int)TaskManagementWeb.Models.TaskStatus.Assigned:
+                                statusItems.AddRange(new[] {
+                            new SelectListItem() { Text = "Назначена", Value = "1" },
+                            new SelectListItem() { Text = "Выполняется", Value = "2" },
+                            new SelectListItem() { Text = "Приостановлена", Value = "3" } });
+                                break;
+                            case (int)TaskManagementWeb.Models.TaskStatus.Suspended:
+                            case (int)TaskManagementWeb.Models.TaskStatus.Executing:
+                            case (int)TaskManagementWeb.Models.TaskStatus.Completed:
+                                statusItems.AddRange(new[] {
+                            new SelectListItem() { Text = "Выполняется", Value = "2" },
+                            new SelectListItem() { Text = "Приостановлена", Value = "3" },
+                            new SelectListItem() { Text = "Завершена", Value = "4"}
+                        });
+                                break;
+                        }
+
+                        @Html.DropDownListFor(m => m.Status, statusItems, new { @id = "selectStatus", @class = "form-control" })
+
+                    }
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2">Плановая трудоемкость задачи (часов):</label>
+
+                <div class="col-sm-10">
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <label>Плановая трудоемкость текущей задачи (часов):</label>
+                            @Html.TextBoxFor(m => m.PlannedExecutionTimeHours, new { @id = "tbPlannedExecutionTime", @class = "form-control", @required = "true" })
+                            @Html.ValidationMessageFor(m => m.PlannedExecutionTimeHours, "", new { @class = "text-danger" })
+
+                            @if (Model.HasSubtasks)
+                            {
+                                <br />
+
+                                <label>
+                                    Плановая трудоемкость подзадач:
+                                </label>
                                 <table class="table table-bordered table-striped table-condensed">
-                                    <thead><tr><td>Наименование подзадачи</td><td>Трудоемкость</td></tr></thead>
+                                    <thead>
+                                        <tr><td>Наименование подзадачи</td><td>Трудоемкость</td></tr>
+                                    </thead>
                                     <tbody>
                                         @foreach (var subtask in Model.Subtasks)
                                         {
@@ -94,77 +120,70 @@
                                         }
                                     </tbody>
                                 </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-inline">
-                        <label>Общая плановая трудоемкость текущей задачи (часов):</label>
-                        @Html.DisplayFor(m => m.CalculatedPlannedExecutionTimeHours)
-                    </div>
-                }
-
-            </div>
-
-            <div class="panel">
-                
-            </div>
-
-            
-
-        </div>
-
-        <div class="form-group">
-            <label>Фактическое время выполнения (часов):</label>
-            <div class="panel">
-                @Html.TextBoxFor(m => m.ActualExecutionTimeHours, new { @id = "tbActualExecutionTime", @class = "form-control" })
-                @Html.ValidationMessageFor(m => m.ActualExecutionTimeHours, "", new { @class = "text-danger" })
-            </div>
-            @if (Model.HasSubtasks)
-            {
-                <div class="panel panel-default ">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <a data-toggle="collapse" href="#collapseActual">Фактическое время выполнения подзадач:</a>
-                        </h4>
-                    </div>
-                    <div id="collapseActual" class="panel-collapse collapse">
-                        <div class="panel-body">
-                            <table class="table table-bordered table-striped table-condensed">
-                                <thead><tr><td>Наименование подзадачи</td><td>Фактическое время выполнения</td></tr></thead>
-                                <tbody>
-                                    @foreach (var subtask in Model.Subtasks)
-                                    {
-                                        <tr>
-                                            <td>@subtask.Name</td>
-                                            <td>@subtask.ActualExecutionTimeHours</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
+                                <label>Общая плановая трудоемкость текущей задачи (часов): @Model.CalculatedPlannedExecutionTimeHours</label>
+                            }
                         </div>
                     </div>
                 </div>
-            }
-            
-       </div>
-
-        <div class="form-group">
-            <label>Дата завершения:</label>
-            <div class="panel">
-                @if (Model.CompleteTimeStamp != null)
-                {
-                    @Html.DisplayFor(m => m.CompleteTimeStamp);
-                }
-                else
-                {
-                    <p>Отсутствует</p>
-                }
             </div>
-        </div>
 
-        <div class="text-right">
-            <input class="btn btn-primary" type="submit" value="Сохранить изменения" />
-        </div>
-    </form>
- </div>
+            <div class="form-group">
+                <label class="col-sm-2">Фактическое время выполнения (часов):</label>
+                <div class="col-sm-10">
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <label>Фактическое время выполнения текущей задачи (часов):</label>
+                            @Html.TextBoxFor(m => m.ActualExecutionTimeHours, new { @id = "tbActualExecutionTime", @class = "form-control", @required = "true" })
+                            @Html.ValidationMessageFor(m => m.ActualExecutionTimeHours, "", new { @class = "text-danger" })
+
+                            @if (Model.HasSubtasks)
+                            {
+                                <br />
+
+                                <label>
+                                    Фактическое время выполнения подзадач:
+                                </label>
+                                <table class="table table-bordered table-striped table-condensed">
+                                    <thead>
+                                        <tr><td>Наименование подзадачи</td><td>Время выполнения</td></tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var subtask in Model.Subtasks)
+                                        {
+                                            <tr>
+                                                <td>@subtask.Name</td>
+                                                <td>@subtask.CalculatedActualExecutionTimeHours</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                                <label>Общее фактическое время выполнения текущей задачи (часов): @Model.CalculatedActualExecutionTimeHours</label>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2">Дата завершения:</label>
+                <div class="col-sm-10">
+                    @if (Model.CompleteTimeStamp != null)
+                    {
+                        @Html.DisplayFor(m => m.CompleteTimeStamp);
+                    }
+                    else
+                    {
+                        <p>Отсутствует</p>
+                    }
+                </div>
+            </div>
+
+            <div class="text-right">
+                <button class="btn btn-primary" type="submit">
+                    <span class="glyphicon glyphicon-floppy-disk"></span> Сохранить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

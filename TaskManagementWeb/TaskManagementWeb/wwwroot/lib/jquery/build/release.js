@@ -1,246 +1,90 @@
-#!/usr/bin/env node
-/*
- * jQuery Core Release Management
- */
+var fs = require( "fs" );
 
-// Debugging variables
-var	debug = false,
-	skipRemote = false;
+module.exports = function( Release ) {
 
-var fs = require("fs"),
-	child = require("child_process"),
-	path = require("path");
+	var
+		files = [
+			"dist/jquery.js",
+			"dist/jquery.min.js",
+			"dist/jquery.min.map",
+			"dist/jquery.slim.js",
+			"dist/jquery.slim.min.js",
+			"dist/jquery.slim.min.map",
+			"src/core.js"
+		],
+		cdn = require( "./release/cdn" ),
+		dist = require( "./release/dist" ),
+		ensureSizzle = require( "./release/ensure-sizzle" ),
 
-var releaseVersion,
-	nextVersion,
-	CDNFiles,
-	isBeta,
-	pkg,
-	branch,
+		npmTags = Release.npmTags;
 
-	scpURL = "jqadmin@code.origin.jquery.com:/var/www/html/code.jquery.com/",
-	cdnURL = "http://code.origin.jquery.com/",
-	repoURL = "git@github.com:jquery/jquery.git",
+	Release.define( {
+		npmPublish: true,
+		issueTracker: "github",
 
-	// Windows needs the .cmd version but will find the non-.cmd
-	// On Windows, ensure the HOME environment variable is set
-	gruntCmd = process.platform === "win32" ? "grunt.cmd" : "grunt",
+		/**
+		 * Ensure the repo is in a proper state before release
+		 * @param {Function} callback
+		 */
+		checkRepoState: function( callback ) {
+			ensureSizzle( Release, callback );
+		},
 
-	devFile = "dist/jquery.js",
-	minFile = "dist/jquery.min.js",
-	mapFile = "dist/jquery.min.map",
+		/**
+		 * Set the version in the src folder for distributing AMD
+		 */
+		_setSrcVersion: function() {
+			var corePath = __dirname + "/../src/core.js",
+				contents = fs.readFileSync( corePath, "utf8" );
+			contents = contents.replace( /@VERSION/g, Release.newVersion );
+			fs.writeFileSync( corePath, contents, "utf8" );
+		},
 
-	releaseFiles = {
-		"jquery-VER.js": devFile,
-		"jquery-VER.min.js": minFile,
-		"jquery-VER.min.map": mapFile,
-		"jquery.js": devFile,
-		"jquery.min.js": minFile,
-		"jquery.min.map": mapFile,
-		"jquery-latest.js": devFile,
-		"jquery-latest.min.js": minFile,
-		"jquery-latest.min.map": mapFile
-	};
+		/**
+		 * Generates any release artifacts that should be included in the release.
+		 * The callback must be invoked with an array of files that should be
+		 * committed before creating the tag.
+		 * @param {Function} callback
+		 */
+		generateArtifacts: function( callback ) {
+			Release.exec( "grunt", "Grunt command failed" );
+			Release.exec(
+				"grunt custom:-ajax,-effects --filename=jquery.slim.js && " +
+					"grunt remove_map_comment --filename=jquery.slim.js",
+				"Grunt custom failed"
+			);
+			cdn.makeReleaseCopies( Release );
+			Release._setSrcVersion();
+			callback( files );
+		},
 
-steps(
-	initialize,
-	checkGitStatus,
-	tagReleaseVersion,
-	gruntBuild,
-	makeReleaseCopies,
-	setNextVersion,
-	uploadToCDN,
-	pushToGithub,
-	exit
-);
+		/**
+		 * Acts as insertion point for restoring Release.dir.repo
+		 * It was changed to reuse npm publish code in jquery-release
+		 * for publishing the distribution repo instead
+		 */
+		npmTags: function() {
 
-function initialize( next ) {
+			// origRepo is not defined if dist was skipped
+			Release.dir.repo = Release.dir.origRepo || Release.dir.repo;
+			return npmTags();
+		},
 
-	if ( process.argv[2] === "-d" ) {
-		process.argv.shift();
-		debug = true;
-		console.warn("=== DEBUG MODE ===" );
-	}
-
-	// First arg should be the version number being released
-	var newver, oldver,
-		rversion = /^(\d)\.(\d+)\.(\d)((?:a|b|rc)\d|pre)?$/,
-		version = ( process.argv[3] || "" ).toLowerCase().match( rversion ) || {},
-		major = version[1],
-		minor = version[2],
-		patch = version[3],
-		xbeta = version[4];
-
-	branch = process.argv[2];
-	releaseVersion = process.argv[3];
-	isBeta = !!xbeta;
-
-	if ( !branch || !major || !minor || !patch ) {
-		die( "Usage: " + process.argv[1] + " branch releaseVersion" );
-	}
-	if ( xbeta === "pre" ) {
-		die( "Cannot release a 'pre' version!" );
-	}
-	if ( !(fs.existsSync || path.existsSync)( "package.json" ) ) {
-		die( "No package.json in this directory" );
-	}
-	pkg = JSON.parse( fs.readFileSync( "package.json" ) );
-
-	console.log( "Current version is " + pkg.version + "; generating release " + releaseVersion );
-	version = pkg.version.match( rversion );
-	oldver = ( +version[1] ) * 10000 + ( +version[2] * 100 ) + ( +version[3] )
-	newver = ( +major ) * 10000 + ( +minor * 100 ) + ( +patch );
-	if ( newver < oldver ) {
-		die( "Next version is older than current version!" );
-	}
-
-	nextVersion = major + "." + minor + "." + ( isBeta ? patch : +patch + 1 ) + "pre";
-	next();
-}
-
-function checkGitStatus( next ) {
-	git( [ "status" ], function( error, stdout, stderr ) {
-		var onBranch = ((stdout||"").match( /On branch (\S+)/ ) || [])[1];
-		if ( onBranch !== branch ) {
-			die( "Branches don't match: Wanted " + branch + ", got " + onBranch );
+		/**
+		 * Publish to distribution repo and npm
+		 * @param {Function} callback
+		 */
+		dist: function( callback ) {
+			cdn.makeArchives( Release, function() {
+				dist( Release, files, callback );
+			} );
 		}
-		if ( /Changes to be committed/i.test( stdout ) ) {
-			die( "Please commit changed files before attemping to push a release." );
-		}
-		if ( /Changes not staged for commit/i.test( stdout ) ) {
-			die( "Please stash files before attempting to push a release." );
-		}
-		next();
-	});
-}
+	} );
+};
 
-function tagReleaseVersion( next ) {
-	updatePackageVersion( releaseVersion );
-	git( [ "commit", "-a", "-m", "Tagging the " + releaseVersion + " release." ], function(){
-		git( [ "tag", releaseVersion ], next, debug);
-	}, debug);
-}
-
-function gruntBuild( next ) {
-	exec( gruntCmd, [], function( error, stdout ) {
-		if ( error ) {
-			die( error + stderr );
-		}
-		console.log( stdout );
-		next();
-	}, debug);
-}
-
-function makeReleaseCopies( next ) {
-	CDNFiles = {};
-	Object.keys( releaseFiles ).forEach(function( key ) {
-		var text,
-			builtFile = releaseFiles[ key ],
-			releaseFile = key.replace( /VER/g, releaseVersion );
-
-		// Beta releases don't update the jquery-latest etc. copies
-		if ( !isBeta || key !== releaseFile ) {
-
-			if ( /\.map$/.test( releaseFile ) ) {
-				// Map files need to reference the new uncompressed name;
-				// assume that all files reside in the same directory.
-				// "file":"jquery.min.js","sources":["jquery.js"]
-				text = fs.readFileSync( builtFile, "utf8" )
-					.replace( /"file":"([^"]+)","sources":\["([^"]+)"\]/,
-						"\"file\":\"" + releaseFile.replace( /\.min\.map/, ".min.js" ) +
-						"\",\"sources\":[\"" + releaseFile.replace( /\.min\.map/, ".js" ) + "\"]" );
-				console.log( "Modifying map " + builtFile + " to " + releaseFile );
-				if ( !debug ) {
-					fs.writeFileSync( releaseFile, text );
-				}
-			} else {
-				copy( builtFile, releaseFile );
-			}
-
-			CDNFiles[ releaseFile ] = builtFile;
-		}
-	});
-	next();
-}
-
-function setNextVersion( next ) {
-	updatePackageVersion( nextVersion );
-	git( [ "commit", "-a", "-m", "Updating the source version to " + nextVersion ], next, debug );
-}
-
-function uploadToCDN( next ) {
-	var cmds = [];
-
-	Object.keys( CDNFiles ).forEach(function( name ) {
-		cmds.push(function( nxt ){
-			exec( "scp", [ name, scpURL ], nxt, debug || skipRemote );
-		});
-		cmds.push(function( nxt ){
-			exec( "curl", [ cdnURL + name + "?reload" ], nxt, debug || skipRemote );
-		});
-	});
-	cmds.push( next );
-	
-	steps.apply( this, cmds );
-}
-
-function pushToGithub( next ) {
-	git( [ "push", "--tags", repoURL, branch ], next, debug || skipRemote );
-}
-
-//==============================
-
-function steps() {
-	var cur = 0,
-		steps = arguments;
-	(function next(){
-		process.nextTick(function(){
-			steps[ cur++ ]( next );
-		});
-	})();
-}
-
-function updatePackageVersion( ver ) {
-	console.log( "Updating package.json version to " + ver );
-	pkg.version = ver;
-	if ( !debug ) {
-		fs.writeFileSync( "package.json", JSON.stringify( pkg, null, "\t" ) + "\n" );
-	}
-}
-
-function copy( oldFile, newFile ) {
-	console.log( "Copying " + oldFile + " to " + newFile );
-	if ( !debug ) {
-		fs.writeFileSync( newFile, fs.readFileSync( oldFile, "utf8" ) );
-	}
-}
-
-function git( args, fn, skip ) {
-	exec( "git", args, fn, skip );
-}
-
-function exec( cmd, args, fn, skip ) {
-	if ( skip ) {
-		console.log( "# " + cmd + " " + args.join(" ") );
-		fn( "", "", "" );
-	} else {
-		console.log( cmd + " " + args.join(" ") );
-		child.execFile( cmd, args, { env: process.env }, 
-			function( err, stdout, stderr ) {
-				if ( err ) {
-					die( stderr || stdout || err );
-				}
-				fn.apply( this, arguments );
-			}
-		);
-	}
-}
-
-function die( msg ) {
-	console.error( "ERROR: " + msg );
-	process.exit( 1 );
-}
-
-function exit() {
-	process.exit( 0 );
-}
+module.exports.dependencies = [
+	"archiver@1.3.0",
+	"shelljs@0.7.7",
+	"npm@4.4.1",
+	"chalk@1.1.3"
+];
