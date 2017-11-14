@@ -78,13 +78,17 @@
         };
 
         function OnTaskUpdateSuccess(data) {
-            if (data.success != true) {
-                alert("Не удалось добавить задачу.")
-                return;
-            }
+            if (data.success != true) {               
 
-            UpdateTaskDetaild(selectedTaskID);
-            ReloadTasksTree();
+                    alert("Не удалось сохнранить задачу.")
+                    return;
+                
+            }
+            else {
+
+                UpdateTaskDetaild(selectedTaskID);
+                ReloadTasksTree();
+            }
         };
 
         function OnSelectedTaskChanged(e, node) {
@@ -155,7 +159,7 @@
                 <span class="glyphicon glyphicon-trash"></span> Удалить задачу
             </button>
         </div>        
-        <div class="mt-lg-5" id="treeTasks"></div>
+        <div id="treeTasks"></div>
     </div>    
     <div class="col-md-10">
         <div id="divTaskDetails"></div>

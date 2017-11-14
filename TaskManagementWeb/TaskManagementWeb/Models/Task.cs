@@ -13,12 +13,16 @@ namespace TaskManagementWeb.Models
         public int ID { get; set; }
         public int? ParentId { get; set; }
         public Task Parent { get;set; }
+        [Required(ErrorMessage ="Введите название задачи")]
         public string Name { get; set; }
         public string Description { get; set; }
+        [Required(ErrorMessage = "Укажите список исполнителей")]
         public string Implementer { get; set; }
         public DateTime CreationTimeStamp { get; set; }
         public int Status { get; set; }
+        [Range(0, int.MaxValue, ErrorMessage = "Должно быть больше 0")]
         public int PlannedExecutionTimeHours { get; set; }
+        [Range(0, int.MaxValue, ErrorMessage = "Должно быть больше 0")]
         public int? ActualExecutionTimeHours { get; set; }
         public DateTime? CompleteTimeStamp { get; set; }
         [InverseProperty("Parent")]

@@ -80,6 +80,11 @@ namespace TaskManagementWeb.Controllers
         [HttpPost]
         public async Task<ActionResult> UpdateTask(Models.Task model)
         {
+            if(!ModelState.IsValid)
+            {
+                return PartialView("TaskDetailsPartial", model);
+            }
+
             if(model.Status == (int)Models.TaskStatus.Completed)
             {
                 model.CompleteTimeStamp = DateTime.Now;
