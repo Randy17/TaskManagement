@@ -25,7 +25,7 @@ namespace TaskManagementWeb.Controllers
 
         public JsonResult GetTreeData()
         {
-            List<TaskTreeItemViewModelTest> taskTreeItems = _repository.GetTaskTreeItems();
+            List<TaskTreeItemViewModel> taskTreeItems = _repository.GetTaskTreeItems();
             return Json(taskTreeItems);
         }
 
@@ -82,7 +82,7 @@ namespace TaskManagementWeb.Controllers
         {
             if(!ModelState.IsValid)
             {
-                return PartialView("TaskDetailsPartial", model);
+                return new JsonResult(new { Success = false });
             }
 
             if(model.Status == (int)Models.TaskStatus.Completed)
@@ -97,7 +97,7 @@ namespace TaskManagementWeb.Controllers
             Models.Task updatedTask = await _repository.UpdateTaskAsync(model);
             if(updatedTask != null)
             {
-                return new JsonResult(new { Success = true, updatedTask = updatedTask });
+                return new JsonResult(new { Success = true });
             }
 
             return new JsonResult(new { Success = false });            

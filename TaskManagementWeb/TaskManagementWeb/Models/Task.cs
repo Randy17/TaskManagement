@@ -27,6 +27,9 @@ namespace TaskManagementWeb.Models
         public DateTime? CompleteTimeStamp { get; set; }
         [InverseProperty("Parent")]
         public List<Task> Subtasks { get; set; }
+        /// <summary>
+        /// Флаг наличия подзадач
+        /// </summary>
         [NotMapped]
         public bool HasSubtasks
         {
@@ -35,6 +38,9 @@ namespace TaskManagementWeb.Models
                 return Subtasks != null && Subtasks.Count > 0;
             }
         }
+        /// <summary>
+        /// Вычисленное значение планируемой трудоемкости текущей задачи и всех подзадач
+        /// </summary>
         [NotMapped]
         public int CalculatedPlannedExecutionTimeHours
         {
@@ -47,6 +53,9 @@ namespace TaskManagementWeb.Models
                 return Subtasks.Sum(st => st.CalculatedPlannedExecutionTimeHours) + PlannedExecutionTimeHours;
             }
         }
+        /// <summary>
+        /// Вычисленное значение фактической трудоемкости текущей задачи и всех подзадач
+        /// </summary>
         [NotMapped]
         public int CalculatedActualExecutionTimeHours
         {

@@ -3,11 +3,6 @@
     Layout = null;
 }
 
-<script type="text/javascript">
-
-    
-</script>
-
 <form asp-controller="Home" asp-action="AddTask" data-ajax="true" data-ajax-method="POST" data-ajax-success="OnTaskAddSuccess">
     @Html.HiddenFor(m => m.ParentId)
     <div class="form-group" >

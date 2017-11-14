@@ -19,11 +19,14 @@
 
         $(document).ready(function () {
 
+            $('#loadingTaskTree').show();
+
             $.ajax({
                 url: '@Url.Action("GetTreeData", "Home")',
                 method: "GET",
                 dataType: "json",
                 success: function (data) {
+                    $('#loadingTaskTree').hide();
                     tree = $('#treeTasks').treeview({
                         levels: 1,
                         data: data,
@@ -67,9 +70,13 @@
         });
 
         function OnTaskAddSuccess(data) {
-            if (data.success != true) {
-                alert("Не удалось добавить задачу.")
+            if (data.success == false) {
+                $('#alert').html('<div class="alert alert-danger">Не удалось добавить задачу</div >');
                 return;
+            }
+            else if (data.success == true){
+                $('#alert').html('<div class="alert alert-success">Задача добавлена</div >');
+
             }
 
             $('#divDialog').modal('hide');
@@ -78,16 +85,13 @@
         };
 
         function OnTaskUpdateSuccess(data) {
-            if (data.success != true) {               
-
-                    alert("Не удалось сохнранить задачу.")
-                    return;
-                
+            if (data.success != true) {
+                $('#alert').html('<div class="alert alert-danger">Не удалось обновить задачу</div >');
+                return;
             }
             else {
-
                 UpdateTaskDetaild(selectedTaskID);
-                ReloadTasksTree();
+                $('#alert').html('<div class="alert alert-success">Задача обновлена</div >');
             }
         };
 
@@ -108,7 +112,14 @@
 
         function UpdateTaskDetaild(taskId) {
             var data = { taskID: taskId };
-            $('#divTaskDetails').load('@Url.Action("TaskDetails", "Home")', data);
+            $('#loadingTaskDetailf').show();
+            $('#divTaskDetails').load('@Url.Action("TaskDetails", "Home")', data, function (response, status, xhr) {
+                if (status == "success") {
+                    $('#loadingTaskDetailf').hide();
+                }
+            });                
+         
+            $('#alert').html('');
         };
 
         function ReloadTasksTree() {
@@ -148,7 +159,6 @@
     </script>
 }
 
-
 <div class="row">
     <div class="col-md-2 menu-board ">
         <div class="text-center">
@@ -158,11 +168,14 @@
             <button id="btnRemoveTask" type="button" class="btn btn-danger btn-block" disabled="True" data-toggle="modal">
                 <span class="glyphicon glyphicon-trash"></span> Удалить задачу
             </button>
-        </div>        
+        </div>    
+        <div id="loadingTaskTree" class="alert alert-info" style="display: none">Загрузка задач...</div>
         <div id="treeTasks"></div>
     </div>    
     <div class="col-md-10">
-        <div id="divTaskDetails"></div>
+        <div id="alert"></div>        
+        <div id="divTaskDetails"></div>    
+        <div id="loadingTaskDetailf" class="alert alert-info" style="display: none">Загрузка задачи...</div>
     </div>
 </div>
 
@@ -179,22 +192,4 @@
         </div>
     </div>
 </div>
-
-@*<div id="divRemoveDialog" class="modal fade" role="dialog" aria-hidden="true" data-backdrop="static">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Удалить задачу?</h4>
-                </div>
-                <div class="modal-body panel-body" width="100%">
-                    <label id="txtConfitmDeleteMsg"></label>
-                    <div class="text-center">
-                        <input class="btn btn-primary" type="button" value="Да" id="btnConfirmRemoveTask" />
-                        <input class="btn btn-default" id="btnCancelAddVplDlg" type="button" value="Нет" data-dismiss="modal" />
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>*@
 
